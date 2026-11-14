@@ -22,3 +22,10 @@ Daily tasks: **https://dreamstick9.github.io/heartbeat/**
 2. Make a branch for your task, e.g. `kl-07-register`.
 3. Open a pull request with the task ID in the title, e.g. `KL-07: register route`.
    Heartbeat marks the task done when the PR is merged.
+
+
+## Setup
+1. `git clone `
+2. `npm install`
+3. `cp .env.example .env`
+4. `npm run dev`
