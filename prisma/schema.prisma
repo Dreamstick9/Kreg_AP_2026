@@ -1,0 +1,76 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MonitorStatus {
+  UP
+  DOWN
+  UNKNOWN
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  monitors     Monitor[]
+
+  @@map("users")
+}
+
+model Monitor {
+  id                  Int           @id @default(autoincrement())
+  userId              Int           @map("user_id")
+  name                String
+  url                 String
+  intervalSec         Int           @default(60) @map("interval_sec")
+  isActive            Boolean       @default(true) @map("is_active")
+  isPublic            Boolean       @default(false) @map("is_public")
+  status              MonitorStatus @default(UNKNOWN)
+  consecutiveFailures Int           @default(0) @map("consecutive_failures")
+  lastCheckedAt       DateTime?     @map("last_checked_at")
+  createdAt           DateTime      @default(now()) @map("created_at")
+
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results             CheckResult[]
+  incidents           Incident[]
+
+  @@index([userId])
+  @@map("monitors")
+}
+
+model CheckResult {
+  id              Int      @id @default(autoincrement())
+  monitorId       Int      @map("monitor_id")
+  isUp            Boolean  @map("is_up")
+  statusCode      Int?     @map("status_code")
+  responseTimeMs  Int?     @map("response_time_ms")
+  error           String?
+  checkedAt       DateTime @default(now()) @map("checked_at")
+
+  monitor         Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId, checkedAt])
+  @@map("check_results")
+}
+
+model Incident {
+  id         Int       @id @default(autoincrement())
+  monitorId  Int       @map("monitor_id")
+  reason     String
+  startedAt  DateTime  @default(now()) @map("started_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  monitor    Monitor   @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId, startedAt])
+  @@map("incidents")
+}
