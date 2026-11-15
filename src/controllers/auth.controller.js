@@ -37,3 +37,12 @@ const register = async (req, res) => {
 };
 
 module.exports = { register };
+
+module.exports.me = (req, res) => {
+    return res.status(200).json({
+        data: {
+            id: req.user.id,
+            email: req.user.email
+        }
+    });
+};
