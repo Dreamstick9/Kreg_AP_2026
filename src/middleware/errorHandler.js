@@ -1,8 +1,14 @@
 function errorHandler(err, req, res, next) {
     console.error(err);
 
-    return res.status(err.status || 500).json({
-        error: err.message || 'Something went wrong'
+    const status = err.status || err.statusCode || 500;
+
+    if (res.headersSent) {
+        return next(err);
+    }
+
+    return res.status(status).json({
+        error: status >= 500 ? 'Something went wrong' : (err.message || 'Something went wrong')
     });
 }
 
