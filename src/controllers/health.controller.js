@@ -1,5 +1,12 @@
-const gethealth = (req, res) => {
-    res.json({ok : true})
-}
+const prisma = require('../config/db');
 
-module.exports = { gethealth }
+const gethealth = async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false });
+  }
+};
+
+module.exports = { gethealth };

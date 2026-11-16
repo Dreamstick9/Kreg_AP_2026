@@ -9,6 +9,9 @@
     "start": "node src/server.js",
     "fake": "node tools/fake-target.js"
   },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Dreamstick9/Kreg_AP_2026.git"
