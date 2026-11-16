@@ -15,4 +15,10 @@ function getMonitors(userId) {
   });
 }
 
-module.exports = { createMonitor, getMonitors };
+function getMonitorById(monitorId, userId) {
+  return prisma.monitor.findFirst({
+    where: { id: monitorId, userId }
+  });
+}
+
+module.exports = { createMonitor, getMonitors, getMonitorById };

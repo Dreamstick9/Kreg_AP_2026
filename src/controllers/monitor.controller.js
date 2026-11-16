@@ -1,4 +1,5 @@
 const monitorService = require('../services/monitor.service');
+const statsService = require('../services/stats.service');
 
 async function createMonitor(req, res) {
   try {
@@ -18,4 +19,30 @@ async function getMonitors(req, res) {
   }
 }
 
-module.exports = { createMonitor, getMonitors };
+async function getMonitorStats(req, res) {
+  const monitorId = Number(req.params.id);
+
+  if (!Number.isInteger(monitorId)) {
+    return res.status(404).json({ error: 'Monitor not found' });
+  }
+
+  try {
+    const monitor = await monitorService.getMonitorById(monitorId, req.user.id);
+
+    if (!monitor) {
+      return res.status(404).json({ error: 'Monitor not found' });
+    }
+
+    const stats = await statsService.getStats(monitorId);
+
+    if (!stats) {
+      return res.status(404).json({ error: 'Monitor not found' });
+    }
+
+    return res.json({ data: stats });
+  } catch (error) {
+    return res.status(500).json({ error: 'Something went wrong' });
+  }
+}
+
+module.exports = { createMonitor, getMonitors, getMonitorStats };
