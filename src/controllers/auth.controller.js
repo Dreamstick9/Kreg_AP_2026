@@ -1,7 +1,6 @@
-
 const authService = require('../services/auth.service');
 
-const register = async (req, res) => {
+const register = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
 
@@ -28,11 +27,8 @@ const register = async (req, res) => {
         return res.status(201).json({
             data: result
         });
-
     } catch (error) {
-        return res.status(error.statusCode || 500).json({
-            error: error.message || 'Server error'
-        });
+        next(error);
     }
 };
 
