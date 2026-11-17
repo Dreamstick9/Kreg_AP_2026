@@ -1,5 +1,5 @@
 const prisma = require('../config/db');
-const { checkOne } = require('../services/checker.service');
+const { runCheck } = require('../services/checker.service');
 
 let running = false;
 // lastCheckedAt is saved after a check finishes, so allow a little timing slack.
@@ -25,7 +25,7 @@ async function tick() {
     });
 
     const results = await Promise.allSettled(
-      dueMonitors.map((monitor) => checkOne(monitor))
+      dueMonitors.map((monitor) => runCheck(monitor))
     );
 
     results.forEach((result, index) => {
