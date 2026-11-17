@@ -41,4 +41,63 @@ const registerUser = async (name, email, password) => {
     };
 };
 
-module.exports = { registerUser };
+const loginUser = async (email, password) => {
+    const user = await prisma.user.findUnique({
+        where: {
+            email: email
+        }
+    });
+
+    if (!user) {
+        const error = new Error('Invalid email or password');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const match = await bcrypt.compare(password, user.passwordHash);
+
+    if (!match) {
+        const error = new Error('Invalid email or password');
+        error.statusCode = 401;
+        throw error;
+    }
+
+    const token = jwt.sign(
+        { id: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
+
+    return {
+        token: token,
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email
+        }
+    };
+};
+
+const getMe = async (id) => {
+    const user = await prisma.user.findUnique({
+        where: {
+            id: id
+        },
+        select: {
+            id: true,
+            name: true,
+            email: true,
+            createdAt: true
+        }
+    });
+
+    if (!user) {
+        const error = new Error('User not found');
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return user;
+};
+
+module.exports = { registerUser, loginUser, getMe };

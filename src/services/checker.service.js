@@ -1,3 +1,5 @@
+const prisma = require('../config/db');
+
 const TIMEOUT_MS = 10000;
 
 /**
@@ -39,4 +41,42 @@ async function checkOne(monitor) {
   }
 }
 
-module.exports = { checkOne };
+async function runCheck(monitor) {
+  const result = await checkOne(monitor);
+
+  let failures = 0;
+  if (!result.isUp) {
+    failures = monitor.consecutiveFailures + 1;
+  }
+
+  let status = monitor.status;
+  if (result.isUp) {
+    status = 'UP';
+  } else if (failures >= 3) {
+    status = 'DOWN';
+  }
+
+  await prisma.$transaction([
+    prisma.checkResult.create({
+      data: {
+        monitorId: monitor.id,
+        isUp: result.isUp,
+        statusCode: result.statusCode,
+        responseTimeMs: result.responseTimeMs,
+        error: result.error
+      }
+    }),
+    prisma.monitor.update({
+      where: { id: monitor.id },
+      data: {
+        lastCheckedAt: new Date(),
+        consecutiveFailures: failures,
+        status: status
+      }
+    })
+  ]);
+
+  return result;
+}
+
+module.exports = { checkOne, runCheck };
