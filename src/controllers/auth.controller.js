@@ -32,13 +32,36 @@ const register = async (req, res, next) => {
     }
 };
 
-module.exports = { register };
+const login = async (req, res, next) => {
+    try {
+        const { email, password } = req.body;
 
-module.exports.me = (req, res) => {
-    return res.status(200).json({
-        data: {
-            id: req.user.id,
-            email: req.user.email
+        if (!email || !password) {
+            return res.status(400).json({
+                error: 'Email and password are required'
+            });
         }
-    });
+
+        const result = await authService.loginUser(email, password);
+
+        return res.status(200).json({
+            data: result
+        });
+    } catch (error) {
+        next(error);
+    }
 };
+
+const me = async (req, res, next) => {
+    try {
+        const user = await authService.getMe(req.user.id);
+
+        return res.status(200).json({
+            data: user
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { register, login, me };
