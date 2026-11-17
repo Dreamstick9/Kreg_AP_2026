@@ -18,11 +18,20 @@ function createMonitor(userId, body) {
   });
 }
 
-function getMonitors(userId) {
-  return prisma.monitor.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' }
+async function getMonitors(userId, page = 1, limit = 10) {
+  const where = { userId };
+  const skip = (page - 1) * limit;
+
+  const monitors = await prisma.monitor.findMany({
+    where,
+    skip,
+    take: limit,
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }]
   });
+
+  const total = await prisma.monitor.count({ where });
+
+  return { monitors, total };
 }
 
 // Every lookup filters on userId, so another user's monitor looks like it
