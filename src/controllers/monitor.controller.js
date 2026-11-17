@@ -23,8 +23,21 @@ async function createMonitor(req, res) {
 
 async function getMonitors(req, res) {
   try {
-    const monitors = await monitorService.getMonitors(req.user.id);
-    res.json({ data: monitors });
+    const page = req.query.page === undefined ? 1 : Number(req.query.page);
+    const requestedLimit = req.query.limit === undefined ? 10 : Number(req.query.limit);
+
+    if (!Number.isSafeInteger(page) || page < 1) {
+      return res.status(400).json({ error: 'page: must be a positive integer' });
+    }
+
+    if (!Number.isSafeInteger(requestedLimit) || requestedLimit < 1) {
+      return res.status(400).json({ error: 'limit: must be a positive integer' });
+    }
+
+    const limit = Math.min(requestedLimit, 50);
+    const { monitors, total } = await monitorService.getMonitors(req.user.id, page, limit);
+
+    res.status(200).json({ data: monitors, page, limit, total });
   } catch (error) {
     res.status(500).json({ error: 'Something went wrong' });
   }
