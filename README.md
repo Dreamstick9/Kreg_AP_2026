@@ -9,7 +9,7 @@ result, opens an incident after 3 failures in a row, and shows uptime on a publi
 
 | | Name | GitHub |
 |---|---|---|
-| A | Dreamstick | [@Dreamstick9](https://github.com/Dreamstick9) |
+| A | Kushagar | [@Dreamstick9](https://github.com/Dreamstick9) |
 | B | Kabir | [@kabirvashisht4-glitch](https://github.com/kabirvashisht4-glitch) |
 | C | Madhav | [@Madhav-GPT](https://github.com/Madhav-GPT) |
 | D | Boomelio | [@boomelio](https://github.com/boomelio) |
