@@ -1,4 +1,5 @@
 const monitorService = require('../services/monitor.service');
+const statsService = require('../services/stats.service');
 
 // Services throw errors with a statusCode (e.g. 400) for bad input.
 function handleError(res, error) {
@@ -39,6 +40,20 @@ async function getMonitor(req, res) {
   }
 }
 
+async function getMonitorStats(req, res) {
+  try {
+    const monitor = await monitorService.getMonitor(req.user.id, req.params.id);
+    if (!monitor) return notFound(res);
+
+    const stats = await statsService.getStats(monitor.id);
+    if (!stats) return notFound(res);
+
+    res.json({ data: stats });
+  } catch (error) {
+    handleError(res, error);
+  }
+}
+
 async function updateMonitor(req, res) {
   try {
     const monitor = await monitorService.updateMonitor(req.user.id, req.params.id, req.body);
@@ -59,4 +74,11 @@ async function deleteMonitor(req, res) {
   }
 }
 
-module.exports = { createMonitor, getMonitors, getMonitor, updateMonitor, deleteMonitor };
+module.exports = {
+  createMonitor,
+  getMonitors,
+  getMonitor,
+  getMonitorStats,
+  updateMonitor,
+  deleteMonitor,
+};

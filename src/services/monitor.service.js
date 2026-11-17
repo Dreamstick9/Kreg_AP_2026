@@ -37,6 +37,10 @@ async function getMonitor(userId, id) {
   });
 }
 
+async function getMonitorById(monitorId, userId) {
+  return getMonitor(userId, monitorId);
+}
+
 async function updateMonitor(userId, id, body = {}) {
   if (!isValidId(id)) return null;
 
@@ -96,4 +100,11 @@ async function deleteMonitor(userId, id) {
   return count > 0;
 }
 
-module.exports = { createMonitor, getMonitors, getMonitor, updateMonitor, deleteMonitor };
+module.exports = {
+  createMonitor,
+  getMonitors,
+  getMonitor,
+  getMonitorById,
+  updateMonitor,
+  deleteMonitor,
+};
