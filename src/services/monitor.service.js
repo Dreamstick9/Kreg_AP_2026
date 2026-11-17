@@ -50,6 +50,14 @@ async function getMonitorById(monitorId, userId) {
   return getMonitor(userId, monitorId);
 }
 
+async function getMonitorResults(monitorId, limit = 50) {
+  return prisma.checkResult.findMany({
+    where: { monitorId },
+    orderBy: { checkedAt: 'desc' },
+    take: limit,
+  });
+}
+
 async function updateMonitor(userId, id, body = {}) {
   if (!isValidId(id)) return null;
 
@@ -114,6 +122,7 @@ module.exports = {
   getMonitors,
   getMonitor,
   getMonitorById,
+  getMonitorResults,
   updateMonitor,
   deleteMonitor,
 };
