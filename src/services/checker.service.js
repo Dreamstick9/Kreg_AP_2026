@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const monitorEvents = require('../events/monitorEvents');
 
 const TIMEOUT_MS = 10000;
 
@@ -75,6 +76,14 @@ async function runCheck(monitor) {
       }
     })
   ]);
+
+  if (failures === 3) {
+    monitorEvents.emit('monitor:down', monitor, result);
+  }
+
+  if (result.isUp && monitor.status === 'DOWN') {
+    monitorEvents.emit('monitor:up', monitor);
+  }
 
   return result;
 }
