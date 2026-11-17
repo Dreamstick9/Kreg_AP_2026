@@ -54,6 +54,25 @@ async function getMonitorStats(req, res) {
   }
 }
 
+async function getMonitorResults(req, res) {
+  try {
+    const monitor = await monitorService.getMonitor(req.user.id, req.params.id);
+    if (!monitor) return notFound(res);
+
+    let limit = parseInt(req.query.limit, 10);
+    if (Number.isNaN(limit) || limit < 1) {
+      limit = 50;
+    } else if (limit > 200) {
+      limit = 200;
+    }
+
+    const results = await monitorService.getMonitorResults(monitor.id, limit);
+    res.json({ data: results });
+  } catch (error) {
+    handleError(res, error);
+  }
+}
+
 async function updateMonitor(req, res) {
   try {
     const monitor = await monitorService.updateMonitor(req.user.id, req.params.id, req.body);
@@ -79,6 +98,7 @@ module.exports = {
   getMonitors,
   getMonitor,
   getMonitorStats,
+  getMonitorResults,
   updateMonitor,
   deleteMonitor,
 };

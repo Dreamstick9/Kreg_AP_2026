@@ -1,5 +1,29 @@
 const prisma = require('../config/db');
 
+async function getDailyUptime(monitorId) {
+  const daily = await prisma.$queryRaw`
+    WITH recent AS (
+      SELECT
+        (checked_at AT TIME ZONE 'UTC')::date::text AS "day",
+        COUNT(*)::int AS "checks",
+        ROUND(
+          100.0 * COUNT(*) FILTER (WHERE is_up)
+          / NULLIF(COUNT(*), 0),
+          2
+        )::float AS "uptimePct"
+      FROM check_results
+      WHERE monitor_id = ${monitorId}
+        AND checked_at >= NOW() - INTERVAL '7 days'
+      GROUP BY (checked_at AT TIME ZONE 'UTC')::date
+      ORDER BY "day" DESC
+      LIMIT 7
+    )
+    SELECT * FROM recent ORDER BY "day" ASC
+  `;
+
+  return daily;
+}
+
 async function getStats(monitorId) {
   const [stats] = await prisma.$queryRaw`
     SELECT
@@ -18,7 +42,14 @@ async function getStats(monitorId) {
     GROUP BY m.id
   `;
 
-  return stats || null;
+  if (!stats) return null;
+
+  const daily = await getDailyUptime(monitorId);
+
+  return {
+    ...stats,
+    daily,
+  };
 }
 
-module.exports = { getStats };
+module.exports = { getStats, getDailyUptime };
