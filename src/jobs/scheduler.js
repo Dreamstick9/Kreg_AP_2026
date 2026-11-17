@@ -2,6 +2,8 @@ const prisma = require('../config/db');
 const { checkOne } = require('../services/checker.service');
 
 let running = false;
+// lastCheckedAt is saved after a check finishes, so allow a little timing slack.
+const DUE_TOLERANCE_MS = 1000;
 
 async function tick() {
   if (running) return;
@@ -17,7 +19,8 @@ async function tick() {
     const dueMonitors = monitors.filter((monitor) => {
       return (
         monitor.lastCheckedAt === null ||
-        now - monitor.lastCheckedAt.getTime() >= monitor.intervalSec * 1000
+        now - new Date(monitor.lastCheckedAt).getTime() >=
+          monitor.intervalSec * 1000 - DUE_TOLERANCE_MS
       );
     });
 
