@@ -7,13 +7,13 @@ const {
   updateMonitor,
   deleteMonitor,
 } = require('../controllers/monitor.controller');
+const auth = require('../middleware/auth');
 const asyncHandler = require('../middleware/asyncHandler');
 const validateMonitor = require('../middleware/validateMonitor');
 
 const router = express.Router();
 
-// TEMP: removed in KL-17
-router.use((req, res, next) => { req.user = { id: 1 }; next(); });
+router.use(auth);
 
 router.post('/', validateMonitor, asyncHandler(createMonitor));
 router.get('/', asyncHandler(getMonitors));
