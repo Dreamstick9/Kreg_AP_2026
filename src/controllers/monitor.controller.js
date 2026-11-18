@@ -86,6 +86,18 @@ async function getMonitorResults(req, res) {
   }
 }
 
+async function getMonitorIncidents(req, res) {
+  try {
+    const monitor = await monitorService.getMonitor(req.user.id, req.params.id);
+    if (!monitor) return notFound(res);
+
+    const incidents = await monitorService.getMonitorIncidents(monitor.id);
+    res.json({ data: incidents });
+  } catch (error) {
+    handleError(res, error);
+  }
+}
+
 async function updateMonitor(req, res) {
   try {
     const monitor = await monitorService.updateMonitor(req.user.id, req.params.id, req.body);
@@ -112,6 +124,7 @@ module.exports = {
   getMonitor,
   getMonitorStats,
   getMonitorResults,
+  getMonitorIncidents,
   updateMonitor,
   deleteMonitor,
 };

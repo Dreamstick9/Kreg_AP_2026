@@ -5,6 +5,7 @@ const {
   getMonitor,
   getMonitorStats,
   getMonitorResults,
+  getMonitorIncidents,
   updateMonitor,
   deleteMonitor,
 } = require('../controllers/monitor.controller');
@@ -20,6 +21,7 @@ router.post('/', validateMonitor, asyncHandler(createMonitor));
 router.get('/', asyncHandler(getMonitors));
 router.get('/:id/stats', asyncHandler(getMonitorStats));
 router.get('/:id/results', asyncHandler(getMonitorResults));
+router.get('/:id/incidents', asyncHandler(getMonitorIncidents));
 router.get('/:id', asyncHandler(getMonitor));
 router.patch('/:id', validateMonitor, asyncHandler(updateMonitor));
 router.delete('/:id', asyncHandler(deleteMonitor));
