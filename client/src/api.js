@@ -1,0 +1,20 @@
+const API = 'http://localhost:3000/api/v1'
+
+export async function api(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json' }
+  if (localStorage.token) {
+    headers.Authorization = 'Bearer ' + localStorage.token
+  }
+
+  const res = await fetch(API + path, {
+    ...options,
+    headers: headers,
+    body: options.body ? JSON.stringify(options.body) : undefined
+  })
+
+  const body = await res.json()
+  if (!res.ok) {
+    throw new Error(body.error)
+  }
+  return body
+}
