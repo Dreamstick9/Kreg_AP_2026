@@ -104,4 +104,29 @@ async function getStats(monitorId) {
   };
 }
 
-module.exports = { getStats, getDailyUptime, getMovingAverage, getOverview };
+async function getPublicStatus() {
+  const rows = await prisma.$queryRaw`
+    SELECT
+      m.id AS "id",
+      m.name AS "name",
+      m.status::text AS "status",
+      ROUND(
+        100.0 * COUNT(cr.id) FILTER (WHERE cr.is_up)
+        / NULLIF(COUNT(cr.id), 0),
+        2
+      )::float AS "uptime24h",
+      ROUND(AVG(cr.response_time_ms) FILTER (WHERE cr.is_up))::int AS "avgMs24h"
+    FROM monitors m
+    LEFT JOIN check_results cr
+      ON cr.monitor_id = m.id
+      AND cr.checked_at >= NOW() - INTERVAL '24 hours'
+    WHERE m.is_public = true
+    GROUP BY m.id
+    ORDER BY m.id
+  `;
+
+  return rows;
+}
+
+
+module.exports = { getStats, getDailyUptime, getMovingAverage, getOverview, getPublicStatus };
