@@ -15,4 +15,16 @@ monitorEvents.on('monitor:down', async (monitor, result) => {
   }
 })
 
+monitorEvents.on('monitor:up', async (monitor) => {
+  try {
+    await prisma.incident.updateMany({
+      where: { monitorId: monitor.id, resolvedAt: null },
+      data: { resolvedAt: new Date() }
+    })
+    console.log('[UP]', monitor.name, 'recovered')
+  } catch (err) {
+    console.error('Failed to resolve incidents for monitor', monitor.id, err.message)
+  }
+})
+
 module.exports = {}

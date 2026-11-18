@@ -58,6 +58,13 @@ async function getMonitorResults(monitorId, limit = 50) {
   });
 }
 
+function getMonitorIncidents(monitorId) {
+  return prisma.incident.findMany({
+    where: { monitorId },
+    orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+  });
+}
+
 async function updateMonitor(userId, id, body = {}) {
   if (!isValidId(id)) return null;
 
@@ -123,6 +130,7 @@ module.exports = {
   getMonitor,
   getMonitorById,
   getMonitorResults,
+  getMonitorIncidents,
   updateMonitor,
   deleteMonitor,
 };
