@@ -24,6 +24,54 @@ async function getDailyUptime(monitorId) {
   return daily;
 }
 
+async function getMovingAverage(monitorId) {
+  return prisma.$queryRaw`
+    WITH recent_checks AS (
+      SELECT checked_at, response_time_ms
+      FROM check_results
+      WHERE monitor_id = ${monitorId}
+        AND is_up = true
+      ORDER BY checked_at DESC
+      LIMIT 50
+    )
+    SELECT
+      checked_at AS "checkedAt",
+      response_time_ms::int AS "responseTimeMs",
+      ROUND(
+        AVG(response_time_ms) OVER (
+          ORDER BY checked_at
+          ROWS BETWEEN 4 PRECEDING AND CURRENT ROW
+        )
+      )::int AS "movingAvgMs"
+    FROM recent_checks
+    ORDER BY checked_at DESC
+  `;
+}
+
+async function getOverview(userId) {
+  return prisma.$queryRaw`
+    WITH monitor_averages AS (
+      SELECT
+        m.id,
+        m.name,
+        ROUND(AVG(cr.response_time_ms))::int AS avg_ms
+      FROM monitors m
+      JOIN check_results cr ON cr.monitor_id = m.id
+      WHERE m.user_id = ${userId}
+        AND cr.is_up = true
+        AND cr.checked_at >= NOW() - INTERVAL '24 hours'
+      GROUP BY m.id, m.name
+    )
+    SELECT
+      id::int AS "id",
+      name,
+      avg_ms::int AS "avgMs",
+      RANK() OVER (ORDER BY avg_ms)::int AS "speedRank"
+    FROM monitor_averages
+    ORDER BY "speedRank", id
+  `;
+}
+
 async function getStats(monitorId) {
   const [stats] = await prisma.$queryRaw`
     SELECT
@@ -44,12 +92,16 @@ async function getStats(monitorId) {
 
   if (!stats) return null;
 
-  const daily = await getDailyUptime(monitorId);
+  const [daily, movingAvg] = await Promise.all([
+    getDailyUptime(monitorId),
+    getMovingAverage(monitorId),
+  ]);
 
   return {
     ...stats,
     daily,
+    movingAvg,
   };
 }
 
-module.exports = { getStats, getDailyUptime };
+module.exports = { getStats, getDailyUptime, getMovingAverage, getOverview };
