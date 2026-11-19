@@ -2,11 +2,17 @@ const authService = require('../services/auth.service');
 
 const register = async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password } = req.body ?? {};
 
         if (!name || !email || !password) {
             return res.status(400).json({
                 error: 'All fields are required'
+            });
+        }
+
+        if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+            return res.status(400).json({
+                error: 'Name, email, and password must be strings'
             });
         }
 
@@ -34,11 +40,17 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.body ?? {};
 
         if (!email || !password) {
             return res.status(400).json({
                 error: 'Email and password are required'
+            });
+        }
+
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            return res.status(400).json({
+                error: 'Email and password must be strings'
             });
         }
 
