@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kreg Lite status</title>
+  <style>
+    body {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+      color: #222;
+      font-family: system-ui, sans-serif;
+    }
+
+    h1 { margin-bottom: 4px; }
+    .muted { color: #666; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+    th { background: #f5f5f5; }
+    .status { white-space: nowrap; }
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 6px;
+      border-radius: 50%;
+    }
+    .up { background: #218838; }
+    .down { background: #c62828; }
+    .unknown { background: #888; }
+    #message { min-height: 1.5em; }
+
+    @media (max-width: 540px) {
+      body { margin-top: 24px; }
+      th, td { padding: 9px 7px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Kreg Lite status</h1>
+    <p class="muted">Status of public monitors.</p>
+    <p id="message" class="muted" role="status" aria-live="polite"></p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Status</th>
+            <th scope="col">Monitor</th>
+            <th scope="col">Uptime (24h)</th>
+            <th scope="col">Average response</th>
+          </tr>
+        </thead>
+        <tbody id="monitors">
+          <tr><td colspan="4">Loading status…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p id="updated" class="muted">Last updated —</p>
+  </main>
+
+  <script>
+    const monitorRows = document.querySelector('#monitors');
+    const message = document.querySelector('#message');
+    const updated = document.querySelector('#updated');
+
+    function makeCell(value) {
+      const cell = document.createElement('td');
+      cell.textContent = value;
+      return cell;
+    }
+
+    function formatValue(value, suffix) {
+      if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+        return '–';
+      }
+
+      return `${value}${suffix}`;
+    }
+
+    function showMonitors(monitors) {
+      monitorRows.replaceChildren();
+
+      if (monitors.length === 0) {
+        const row = document.createElement('tr');
+        const cell = makeCell('No public monitors yet.');
+        cell.colSpan = 4;
+        row.append(cell);
+        monitorRows.append(row);
+        return;
+      }
+
+      monitors.forEach((monitor) => {
+        const row = document.createElement('tr');
+        const status = ['UP', 'DOWN'].includes(monitor.status) ? monitor.status : 'UNKNOWN';
+        const statusCell = document.createElement('td');
+        const dot = document.createElement('span');
+        dot.className = `dot ${status.toLowerCase()}`;
+        dot.setAttribute('aria-hidden', 'true');
+        statusCell.className = 'status';
+        statusCell.append(dot, document.createTextNode(status));
+
+        row.append(
+          statusCell,
+          makeCell(monitor.name),
+          makeCell(formatValue(monitor.uptime24h, '%')),
+          makeCell(formatValue(monitor.avgMs24h, ' ms')),
+        );
+        monitorRows.append(row);
+      });
+    }
+
+    function updateTime() {
+      const now = new Date();
+      const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
+        .map((part) => String(part).padStart(2, '0'))
+        .join(':');
+      updated.textContent = `Last updated ${time}`;
+    }
+
+    async function refreshStatus() {
+      try {
+        const response = await fetch('/api/v1/status', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Status request failed');
+
+        const result = await response.json();
+        if (!Array.isArray(result.data)) throw new Error('Invalid status response');
+
+        showMonitors(result.data);
+        message.textContent = '';
+        updateTime();
+      } catch (error) {
+        message.textContent = 'Could not load status. Trying again in 15 seconds.';
+        if (monitorRows.textContent.includes('Loading status')) {
+          monitorRows.replaceChildren();
+          const row = document.createElement('tr');
+          const cell = makeCell('Status is temporarily unavailable.');
+          cell.colSpan = 4;
+          row.append(cell);
+          monitorRows.append(row);
+        }
+      }
+    }
+
+    refreshStatus();
+    setInterval(refreshStatus, 15000);
+  </script>
+</body>
+</html>
