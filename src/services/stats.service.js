@@ -48,7 +48,7 @@ async function getMovingAverage(monitorId) {
   `;
 }
 
-async function getOverview(userId) {
+async function getRanking(userId) {
   return prisma.$queryRaw`
     WITH monitor_averages AS (
       SELECT
@@ -70,6 +70,63 @@ async function getOverview(userId) {
     FROM monitor_averages
     ORDER BY "speedRank", id
   `;
+}
+
+async function getDowntime(userId) {
+  // Prisma writes started_at and resolved_at as UTC timestamps without a time zone.
+  return prisma.$queryRaw`
+    SELECT
+      m.name,
+      COUNT(i.id)::int AS "incidents",
+      EXTRACT(EPOCH FROM SUM(
+        COALESCE(i.resolved_at, NOW() AT TIME ZONE 'UTC') - i.started_at
+      ))::float AS "downtimeSec"
+    FROM monitors m
+    LEFT JOIN incidents i ON i.monitor_id = m.id
+    WHERE m.user_id = ${userId}
+    GROUP BY m.id, m.name
+    HAVING COUNT(i.id) > 0
+    ORDER BY "downtimeSec" DESC, m.id
+  `;
+}
+
+async function getFailingNow(userId) {
+  return prisma.$queryRaw`
+    WITH latest_checks AS (
+      SELECT DISTINCT ON (m.id)
+        m.name,
+        c.status_code,
+        c.error,
+        c.checked_at,
+        c.is_up
+      FROM monitors m
+      JOIN check_results c ON c.monitor_id = m.id
+      WHERE m.user_id = ${userId}
+        AND c.checked_at = (
+          SELECT MAX(c2.checked_at)
+          FROM check_results c2
+          WHERE c2.monitor_id = m.id
+        )
+      ORDER BY m.id, c.id DESC
+    )
+    SELECT
+      name,
+      status_code AS "statusCode",
+      error,
+      checked_at AS "checkedAt"
+    FROM latest_checks
+    WHERE is_up = false
+  `;
+}
+
+async function getOverview(userId) {
+  const [ranking, downtime, failingNow] = await Promise.all([
+    getRanking(userId),
+    getDowntime(userId),
+    getFailingNow(userId),
+  ]);
+
+  return { ranking, downtime, failingNow };
 }
 
 async function getStats(monitorId) {

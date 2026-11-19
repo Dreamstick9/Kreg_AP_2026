@@ -82,3 +82,46 @@ SELECT
     RANK() OVER (ORDER BY avg_ms)::int AS speed_rank
 FROM monitor_averages
 ORDER BY speed_rank, id;
+
+-- ---------------------------------------------------------------
+-- Query 5: total incident downtime per monitor for one user
+-- Use $1 for the user ID. Open incidents count through now.
+-- Prisma writes both incident timestamps as UTC without a time zone.
+-- ---------------------------------------------------------------
+SELECT
+    m.name,
+    COUNT(i.id)::int AS incidents,
+    EXTRACT(EPOCH FROM SUM(
+        COALESCE(i.resolved_at, NOW() AT TIME ZONE 'UTC') - i.started_at
+    ))::float AS downtime_sec
+FROM monitors m
+LEFT JOIN incidents i ON i.monitor_id = m.id
+WHERE m.user_id = $1
+GROUP BY m.id, m.name
+HAVING COUNT(i.id) > 0
+ORDER BY downtime_sec DESC, m.id;
+
+-- ---------------------------------------------------------------
+-- Query 6: monitors whose latest check failed for one user
+-- Use $1 for the user ID. If timestamps tie, use the larger check ID.
+-- ---------------------------------------------------------------
+WITH latest_checks AS (
+    SELECT DISTINCT ON (m.id)
+        m.name,
+        c.status_code,
+        c.error,
+        c.checked_at,
+        c.is_up
+    FROM monitors m
+    JOIN check_results c ON c.monitor_id = m.id
+    WHERE m.user_id = $1
+      AND c.checked_at = (
+          SELECT MAX(c2.checked_at)
+          FROM check_results c2
+          WHERE c2.monitor_id = m.id
+      )
+    ORDER BY m.id, c.id DESC
+)
+SELECT name, status_code, error, checked_at
+FROM latest_checks
+WHERE is_up = false;
