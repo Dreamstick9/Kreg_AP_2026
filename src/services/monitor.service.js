@@ -41,9 +41,21 @@ async function getMonitors(userId, page = 1, limit = 10) {
 async function getMonitor(userId, id) {
   if (!isValidId(id)) return null;
 
-  return prisma.monitor.findFirst({
-    where: { id: Number(id), userId }
+  const monitor = await prisma.monitor.findFirst({
+    where: { id: Number(id), userId },
+    include: {
+      incidents: {
+        where: { resolvedAt: null },
+        orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+        take: 1,
+      },
+    },
   });
+
+  if (!monitor) return null;
+
+  const { incidents, ...monitorData } = monitor;
+  return { ...monitorData, openIncident: incidents[0] ?? null };
 }
 
 async function getMonitorById(monitorId, userId) {
@@ -92,6 +104,11 @@ async function updateMonitor(userId, id, body = {}) {
       throw badRequest('intervalSec must be an integer >= 10');
     }
     data.intervalSec = body.intervalSec;
+  }
+
+  if (body.isActive !== undefined) {
+    if (typeof body.isActive !== 'boolean') throw badRequest('isActive must be a boolean');
+    data.isActive = body.isActive;
   }
 
   if (body.isPublic !== undefined) {
