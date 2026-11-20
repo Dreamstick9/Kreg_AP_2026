@@ -49,8 +49,8 @@ const loginUser = async (email, password) => {
     });
 
     if (!user) {
-        const error = new Error('Invalid email or password');
-        error.statusCode = 401;
+        const error = new Error('The user does not exist');
+        error.statusCode = 404;
         throw error;
     }
 
@@ -92,7 +92,7 @@ const getMe = async (id) => {
     });
 
     if (!user) {
-        const error = new Error('User not found');
+        const error = new Error('The user does not exist');
         error.statusCode = 404;
         throw error;
     }
