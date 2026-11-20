@@ -12,31 +12,13 @@
     {
       "key": "token",
       "value": ""
+    },
+    {
+      "key": "monitorId",
+      "value": ""
     }
   ],
   "item": [
-    {
-      "name": "Register",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"postman@kreg.dev\",\n  \"password\": \"postman123\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": "{{baseUrl}}/api/v1/auth/register"
-      }
-    },
     {
       "name": "Login",
       "event": [
@@ -44,7 +26,11 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.collectionVariables.set(\"token\", pm.response.json().data.token);"
+              "pm.test(\"status\", () => pm.response.to.have.status(200));",
+              "",
+              "if (pm.response.code === 200) {",
+              "  pm.collectionVariables.set(\"token\", pm.response.json().data.token);",
+              "}"
             ],
             "type": "text/javascript"
           }
@@ -68,7 +54,106 @@
           }
         },
         "url": "{{baseUrl}}/api/v1/auth/login"
-      }
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@kreg.dev\",\n  \"password\": \"demo1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"token\": \"<jwt>\",\n    \"user\": {\n      \"id\": 1,\n      \"name\": \"Demo\",\n      \"email\": \"demo@kreg.dev\"\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"postman-{{$guid}}@kreg.dev\",\n  \"password\": \"postman123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{baseUrl}}/api/v1/auth/register"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(201));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman User\",\n  \"email\": \"postman-{{$guid}}@kreg.dev\",\n  \"password\": \"postman123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register"
+          },
+          "status": "Created",
+          "code": 201,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"token\": \"<jwt>\",\n    \"user\": {\n      \"id\": 2,\n      \"name\": \"Postman User\",\n      \"email\": \"postman-c5aa96f6-b893-4aa5-928f-4375da2da872@kreg.dev\"\n    }\n  }\n}"
+        }
+      ]
     },
     {
       "name": "Me",
@@ -81,7 +166,42 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/auth/me"
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/me"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Demo\",\n    \"email\": \"demo@kreg.dev\",\n    \"createdAt\": \"2026-11-20T18:56:04.383Z\"\n  }\n}"
+        }
+      ]
     },
     {
       "name": "Create monitor",
@@ -90,7 +210,11 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.collectionVariables.set(\"monitorId\", pm.response.json().data.id);"
+              "pm.test(\"status\", () => pm.response.to.have.status(201));",
+              "",
+              "if (pm.response.code === 201) {",
+              "  pm.collectionVariables.set(\"monitorId\", pm.response.json().data.id);",
+              "}"
             ],
             "type": "text/javascript"
           }
@@ -110,7 +234,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Postman monitor\",\n  \"url\": \"https://example.com\",\n  \"intervalSec\": 60,\n  \"isPublic\": false\n}",
+          "raw": "{\n  \"name\": \"Postman monitor\",\n  \"url\": \"http://localhost:4000/ok\",\n  \"intervalSec\": 60,\n  \"isPublic\": false\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -118,7 +242,44 @@
           }
         },
         "url": "{{baseUrl}}/api/v1/monitors"
-      }
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman monitor\",\n  \"url\": \"http://localhost:4000/ok\",\n  \"intervalSec\": 60,\n  \"isPublic\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/monitors"
+          },
+          "status": "Created",
+          "code": 201,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"id\": 6,\n    \"userId\": 1,\n    \"name\": \"Postman monitor\",\n    \"url\": \"http://localhost:4000/ok\",\n    \"intervalSec\": 60,\n    \"isActive\": true,\n    \"isPublic\": false,\n    \"status\": \"UNKNOWN\",\n    \"consecutiveFailures\": 0,\n    \"lastCheckedAt\": null,\n    \"createdAt\": \"2026-11-20T18:56:42.589Z\"\n  }\n}"
+        }
+      ]
     },
     {
       "name": "List monitors",
@@ -130,8 +291,43 @@
             "value": "Bearer {{token}}"
           }
         ],
-        "url": "{{baseUrl}}/api/v1/monitors"
-      }
+        "url": "{{baseUrl}}/api/v1/monitors?page=1&limit=10"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/monitors?page=1&limit=10"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": [\n    {\n      \"id\": 6,\n      \"userId\": 1,\n      \"name\": \"Postman monitor\",\n      \"url\": \"http://localhost:4000/ok\",\n      \"intervalSec\": 60,\n      \"isActive\": true,\n      \"isPublic\": false,\n      \"status\": \"UNKNOWN\",\n      \"consecutiveFailures\": 0,\n      \"lastCheckedAt\": null,\n      \"createdAt\": \"2026-11-20T18:56:42.589Z\"\n    },\n    {\n      \"id\": 5,\n      \"userId\": 1,\n      \"name\": \"Private OK\",\n      \"url\": \"http://localhost:4000/ok\",\n      \"intervalSec\": 60,\n      \"isActive\": true,\n      \"isPublic\": false,\n      \"status\": \"UP\",\n      \"consecutiveFailures\": 0,\n      \"lastCheckedAt\": \"2026-11-20T18:56:36.926Z\",\n      \"createdAt\": \"2026-11-20T18:56:04.387Z\"\n    },\n    {\n      \"id\": 4,\n      \"userId\": 1,\n      \"name\": \"Example\",\n      \"url\": \"https://example.com\",\n      \"intervalSec\": 60,\n      \"isActive\": true,\n      \"isPublic\": true,\n      \"status\": \"UP\",\n      \"consecutiveFailures\": 0,\n      \"lastCheckedAt\": \"2026-11-20T18:56:37.246Z\",\n      \"createdAt\": \"2026-11-20T18:56:04.387Z\"\n    },\n    {\n      \"id\": 3,\n      \"userId\": 1,\n      \"name\": \"Fake Flaky\",\n      \"url\": \"http://localhost:4000/flaky\",\n      \"intervalSec\": 10,\n      \"isActive\": true,\n      \"isPublic\": true,\n      \"status\": \"UP\",\n      \"consecutiveFailures\": 0,\n      \"lastCheckedAt\": \"2026-11-20T18:56:36.926Z\",\n      \"createdAt\": \"2026-11-20T18:56:04.387Z\"\n    },\n    {\n      \"id\": 2,\n      \"userId\": 1,\n      \"name\": \"Fake Slow\",\n      \"url\": \"http://localhost:4000/slow\",\n      \"intervalSec\": 30,\n      \"isActive\": true,\n      \"isPublic\": true,\n      \"status\": \"UP\",\n      \"consecutiveFailures\": 0,\n      \"lastCheckedAt\": \"2026-11-20T18:56:39.925Z\",\n      \"createdAt\": \"2026-11-20T18:56:04.387Z\"\n    },\n    {\n      \"id\": 1,\n      \"userId\": 1,\n      \"name\": \"Fake OK\",\n      \"url\": \"http://localhost:4000/ok\",\n      \"intervalSec\": 10,\n      \"isActive\": true,\n      \"isPublic\": true,\n      \"status\": \"UP\",\n      \"consecutiveFailures\": 0,\n      \"lastCheckedAt\": \"2026-11-20T18:56:36.925Z\",\n      \"createdAt\": \"2026-11-20T18:56:04.387Z\"\n    }\n  ],\n  \"page\": 1,\n  \"limit\": 10,\n  \"total\": 6\n}"
+        }
+      ]
     },
     {
       "name": "Get monitor",
@@ -144,7 +340,42 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}"
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"id\": 6,\n    \"userId\": 1,\n    \"name\": \"Postman monitor\",\n    \"url\": \"http://localhost:4000/ok\",\n    \"intervalSec\": 60,\n    \"isActive\": true,\n    \"isPublic\": false,\n    \"status\": \"UNKNOWN\",\n    \"consecutiveFailures\": 0,\n    \"lastCheckedAt\": null,\n    \"createdAt\": \"2026-11-20T18:56:42.589Z\",\n    \"openIncident\": null\n  }\n}"
+        }
+      ]
     },
     {
       "name": "Update monitor",
@@ -170,7 +401,371 @@
           }
         },
         "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}"
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Postman monitor\",\n  \"intervalSec\": 120\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"id\": 6,\n    \"userId\": 1,\n    \"name\": \"Updated Postman monitor\",\n    \"url\": \"http://localhost:4000/ok\",\n    \"intervalSec\": 120,\n    \"isActive\": true,\n    \"isPublic\": false,\n    \"status\": \"UNKNOWN\",\n    \"consecutiveFailures\": 0,\n    \"lastCheckedAt\": null,\n    \"createdAt\": \"2026-11-20T18:56:42.589Z\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Check monitor",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/check"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/check"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"isUp\": true,\n    \"statusCode\": 200,\n    \"responseTimeMs\": 1,\n    \"error\": null\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "List results",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/results?limit=50"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/results?limit=50"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": [\n    {\n      \"id\": 6,\n      \"monitorId\": 6,\n      \"isUp\": true,\n      \"statusCode\": 200,\n      \"responseTimeMs\": 1,\n      \"error\": null,\n      \"checkedAt\": \"2026-11-20T18:56:42.640Z\"\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "List incidents",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/incidents"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/incidents"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": []\n}"
+        }
+      ]
+    },
+    {
+      "name": "Monitor stats",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/stats"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}/stats"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"totalChecks24h\": 1,\n    \"uptime24h\": 100,\n    \"avgMs24h\": 1,\n    \"daily\": [\n      {\n        \"day\": \"2026-11-21\",\n        \"checks\": 1,\n        \"uptimePct\": 100\n      }\n    ],\n    \"movingAvg\": [\n      {\n        \"checkedAt\": \"2026-11-20T18:56:42.640Z\",\n        \"responseTimeMs\": 1,\n        \"movingAvgMs\": 1\n      }\n    ]\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Stats overview",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/v1/stats/overview"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/stats/overview"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": {\n    \"ranking\": [\n      {\n        \"id\": 6,\n        \"name\": \"Updated Postman monitor\",\n        \"avgMs\": 1,\n        \"speedRank\": 1\n      },\n      {\n        \"id\": 5,\n        \"name\": \"Private OK\",\n        \"avgMs\": 9,\n        \"speedRank\": 2\n      },\n      {\n        \"id\": 3,\n        \"name\": \"Fake Flaky\",\n        \"avgMs\": 10,\n        \"speedRank\": 3\n      },\n      {\n        \"id\": 1,\n        \"name\": \"Fake OK\",\n        \"avgMs\": 20,\n        \"speedRank\": 4\n      },\n      {\n        \"id\": 4,\n        \"name\": \"Example\",\n        \"avgMs\": 327,\n        \"speedRank\": 5\n      },\n      {\n        \"id\": 2,\n        \"name\": \"Fake Slow\",\n        \"avgMs\": 3009,\n        \"speedRank\": 6\n      }\n    ],\n    \"downtime\": [],\n    \"failingNow\": []\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Public status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/v1/status"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/status"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Fake OK\",\n      \"status\": \"UP\",\n      \"uptime24h\": 100,\n      \"avgMs24h\": 20\n    },\n    {\n      \"id\": 2,\n      \"name\": \"Fake Slow\",\n      \"status\": \"UP\",\n      \"uptime24h\": 100,\n      \"avgMs24h\": 3009\n    },\n    {\n      \"id\": 3,\n      \"name\": \"Fake Flaky\",\n      \"status\": \"UP\",\n      \"uptime24h\": 100,\n      \"avgMs24h\": 10\n    },\n    {\n      \"id\": 4,\n      \"name\": \"Example\",\n      \"status\": \"UP\",\n      \"uptime24h\": 100,\n      \"avgMs24h\": 327\n    }\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Healthz",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/healthz"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/healthz"
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            }
+          ],
+          "body": "{\n  \"ok\": true\n}"
+        }
+      ]
     },
     {
       "name": "Delete monitor",
@@ -183,7 +778,37 @@
           }
         ],
         "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}"
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"status\", () => pm.response.to.have.status(204));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/monitors/{{monitorId}}"
+          },
+          "status": "No Content",
+          "code": 204,
+          "header": [],
+          "body": ""
+        }
+      ]
     }
   ]
 }
