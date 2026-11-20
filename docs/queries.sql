@@ -1,37 +1,46 @@
 -- Kreg monitoring queries (PostgreSQL)
--- Table: check_results(id, monitor_id, checked_at, success, status_code, response_ms)
+-- Tables: monitors(id, ...), check_results(id, monitor_id, checked_at, is_up, response_time_ms, ...)
 
 -- ---------------------------------------------------------------
--- Query 1: uptime % and average response time, last 24 hours
--- Average response is taken over successful checks only, since
--- failed checks (timeouts) usually have no meaningful response time.
+-- Query 1: uptime % and average response time for one monitor, last 24 hours
+-- Use $1 for the monitor ID. Average response uses successful checks only.
 -- ---------------------------------------------------------------
 SELECT
-    monitor_id,
-    COUNT(*)                                             AS total_checks,
-    COUNT(*) FILTER (WHERE success)                      AS successful_checks,
-    ROUND(100.0 * COUNT(*) FILTER (WHERE success)
-          / COUNT(*), 2)                                 AS uptime_pct,
-    ROUND(AVG(response_ms) FILTER (WHERE success)::numeric, 1)
-                                                         AS avg_response_ms
-FROM check_results
-WHERE checked_at >= now() - interval '24 hours'
-GROUP BY monitor_id
-ORDER BY monitor_id;
+    COUNT(cr.id)::int AS "totalChecks24h",
+    ROUND(
+        100.0 * COUNT(cr.id) FILTER (WHERE cr.is_up)
+        / NULLIF(COUNT(cr.id), 0),
+        2
+    )::float AS "uptime24h",
+    ROUND(AVG(cr.response_time_ms) FILTER (WHERE cr.is_up))::int AS "avgMs24h"
+FROM monitors m
+LEFT JOIN check_results cr
+    ON cr.monitor_id = m.id
+    AND cr.checked_at >= NOW() - INTERVAL '24 hours'
+WHERE m.id = $1
+GROUP BY m.id;
 
 -- ---------------------------------------------------------------
--- Query 2: uptime % per day (UTC), per monitor
+-- Query 2: daily uptime % for one monitor, for the last seven UTC days
+-- Use $1 for the monitor ID. Return oldest to newest.
 -- ---------------------------------------------------------------
-SELECT
-    monitor_id,
-    (checked_at AT TIME ZONE 'UTC')::date                AS day,
-    COUNT(*)                                             AS total_checks,
-    COUNT(*) FILTER (WHERE success)                      AS successful_checks,
-    ROUND(100.0 * COUNT(*) FILTER (WHERE success)
-          / COUNT(*), 2)                                 AS uptime_pct
-FROM check_results
-GROUP BY monitor_id, day
-ORDER BY monitor_id, day;
+WITH recent AS (
+    SELECT
+        (checked_at AT TIME ZONE 'UTC')::date::text AS "day",
+        COUNT(*)::int AS "checks",
+        ROUND(
+            100.0 * COUNT(*) FILTER (WHERE is_up)
+            / NULLIF(COUNT(*), 0),
+            2
+        )::float AS "uptimePct"
+    FROM check_results
+    WHERE monitor_id = $1
+      AND checked_at >= NOW() - INTERVAL '7 days'
+    GROUP BY (checked_at AT TIME ZONE 'UTC')::date
+    ORDER BY "day" DESC
+    LIMIT 7
+)
+SELECT * FROM recent ORDER BY "day" ASC;
 
 -- ---------------------------------------------------------------
 -- Query 3: moving average response time for one monitor
