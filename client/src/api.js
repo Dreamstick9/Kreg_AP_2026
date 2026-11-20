@@ -14,7 +14,9 @@ export async function api(path, options = {}) {
 
   const body = await res.json()
   if (!res.ok) {
-    throw new Error(body.error)
+    const error = new Error(body.error)
+    error.status = res.status
+    throw error
   }
   return body
 }
