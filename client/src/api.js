@@ -12,6 +12,7 @@ export async function api(path, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined
   })
 
+  if (res.status === 204) return null
   const body = await res.json()
   if (!res.ok) {
     const error = new Error(body.error)

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api'
 import './MonitorDetail.css'
 
@@ -35,6 +35,13 @@ function MonitorDetail() {
   const [error, setError] = useState('')
   const [checking, setChecking] = useState(false)
   const [reload, setReload] = useState(0)
+  const navigate = useNavigate()
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState('')
+  const [url, setUrl] = useState('')
+  const [intervalSec, setIntervalSec] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!localStorage.token) return
@@ -76,6 +83,57 @@ function MonitorDetail() {
     } catch (err) {
       setError(err.message)
       setChecking(false)
+    }
+  }
+
+  function startEdit() {
+    setName(monitor.name)
+    setUrl(monitor.url)
+    setIntervalSec(String(monitor.intervalSec))
+    setIsPublic(monitor.isPublic)
+    setError('')
+    setEditing(true)
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      const res = await api('/monitors/' + id, {
+        method: 'PATCH',
+        body: { name: name, url: url, intervalSec: Number(intervalSec), isPublic: isPublic },
+      })
+      setMonitor(res.data)
+      setEditing(false)
+    } catch (err) {
+      setError(err.message)
+    }
+    setSaving(false)
+  }
+
+  async function pauseOrResume() {
+    setError('')
+    try {
+      const res = await api('/monitors/' + id, {
+        method: 'PATCH',
+        body: { isActive: !monitor.isActive },
+      })
+      setMonitor(res.data)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function deleteMonitor() {
+    const ok = window.confirm('Delete ' + monitor.name + '? Its checks and incidents will be deleted too.')
+    if (!ok) return
+    setError('')
+    try {
+      await api('/monitors/' + id, { method: 'DELETE' })
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err.message)
     }
   }
 
@@ -127,8 +185,12 @@ function MonitorDetail() {
       <div className="detail-top">
         <h1>{monitor.name}</h1>
         <span className={'pill ' + pill}>{pillText}</span>
+        {!monitor.isActive && <span className="pill unknown">PAUSED</span>}
       </div>
       <p className="detail-url">{monitor.url}</p>
+      <p className="detail-url">
+        Checked every {monitor.intervalSec} s, {monitor.isPublic ? 'shown' : 'not shown'} on the public status page
+      </p>
 
       <div className="detail-numbers">
         <div className="detail-number">
@@ -141,10 +203,42 @@ function MonitorDetail() {
         </div>
       </div>
 
-      <button onClick={checkNow} disabled={checking}>
-        {checking ? 'Checking...' : 'Check now'}
-      </button>
+      <div className="detail-actions">
+        <button onClick={checkNow} disabled={checking}>
+          {checking ? 'Checking...' : 'Check now'}
+        </button>
+        <button className="grey" onClick={startEdit}>Edit</button>
+        <button className="grey" onClick={pauseOrResume}>
+          {monitor.isActive ? 'Pause' : 'Resume'}
+        </button>
+        <button className="red" onClick={deleteMonitor}>Delete</button>
+      </div>
       {error && <p className="error">{error}</p>}
+
+      {editing && (
+        <form className="detail-edit" onSubmit={saveEdit}>
+          <label>
+            Name
+            <input value={name} onChange={e => setName(e.target.value)} />
+          </label>
+          <label>
+            URL
+            <input value={url} onChange={e => setUrl(e.target.value)} />
+          </label>
+          <label>
+            Interval (seconds)
+            <input type="number" value={intervalSec} onChange={e => setIntervalSec(e.target.value)} />
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={isPublic} onChange={e => setIsPublic(e.target.checked)} />
+            Show on the public status page
+          </label>
+          <div className="detail-actions">
+            <button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+            <button type="button" className="grey" onClick={() => setEditing(false)}>Cancel</button>
+          </div>
+        </form>
+      )}
 
       <h2>Recent checks</h2>
       {results.length === 0 ? (
