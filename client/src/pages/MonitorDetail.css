@@ -78,6 +78,38 @@
   font-size: 22px;
 }
 
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detail-actions .grey {
+  background: #e5e7eb;
+  color: #222;
+}
+
+.detail-actions .red {
+  background: #c62828;
+}
+
+.detail-edit {
+  margin-top: 16px;
+  max-width: 420px;
+}
+
+.detail-edit label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.detail-edit .check {
+  flex-direction: row;
+  align-items: center;
+}
+
 .detail button:disabled {
   opacity: 0.6;
   cursor: default;
