@@ -4,6 +4,7 @@ const prisma = require('./config/db')
 const app = require('./app')
 const { startScheduler } = require('./jobs/scheduler')
 require('./services/incident.service')
+require('./services/alert.service')
 
 const PORT = process.env.PORT || 3000
 
