@@ -49,7 +49,7 @@ const loginUser = async (email, password) => {
     });
 
     if (!user) {
-        const error = new Error('Invalid email or password');
+        const error = new Error('The user does not exist');
         error.statusCode = 401;
         throw error;
     }
