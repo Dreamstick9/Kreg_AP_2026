@@ -2,7 +2,7 @@
 
 Based on the [Heartbeat Team guide](https://github.com/Dreamstick9/heartbeat/blob/main/plan.js).
 
-- Base URL: `http://localhost:3000`. Send request bodies as JSON.
+- Base URL: `https://kreg-ap-2026.onrender.com`. Send request bodies as JSON.
 - Protected routes need `Authorization: Bearer <token>`. Tokens last 7 days.
 - Success: `{ "data": ... }`. Error: `{ "error": "message" }`.
 - The guide’s exceptions are `/healthz` (`{ "ok": true }`) and DELETE (204, no body).

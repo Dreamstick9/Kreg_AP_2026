@@ -32,7 +32,7 @@ cd client && npm run dev
 Open these pages:
 
 - `http://localhost:5173/login` — sign in as `demo@kreg.dev` / `demo1234`, then show `/dashboard`.
-- `http://localhost:3000/status.html` — public status page; it needs no login.
+- `https://kreg-ap-2026.onrender.com/status.html` — public status page; it needs no login.
 - From the dashboard, click the **Fake Flaky** row to show its check history and incident after the detail page is available on the latest `main`.
 
 Make sure **Fake Flaky** is UP before presenting. The fake target starts healthy. Check with `curl -i http://localhost:4000/flaky`; it should return HTTP 200. Each call below flips the target, so check its response before continuing.

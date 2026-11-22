@@ -1,4 +1,4 @@
-const API = 'http://localhost:3000/api/v1'
+const API = 'https://kreg-ap-2026.onrender.com/api/v1'
 
 export async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' }
